@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Read To Me Extension Options</title>
+    </head>
+    <body>
+
+        Favorite color:
+        <form>
+            <label for="voiceSelect">Voices</label>
+            <select id="voiceSelect"></select>
+            <label>
+                Sample Text:
+                <input id="sampleTextInput" value="Select a Voice to try">
+            </label>
+            <input type="submit" value="Try This Voice">
+        </form>
+
+        <label>
+            Reading Rate:
+            <select id="rateSelect">
+                <option value="0.2" label=".2x">
+                <option value="0.5" label=".5x">
+                <option value="1" label="1x">
+                <option value="1.2" label="1.2x">
+                <option value="1.3" label="1.3x">
+                <option value="1.4" label="1.4x">
+                <option value="1.5" label="1.5x">
+                <option value="1.6" label="1.6x">
+                <option value="1.7" label="1.7x">
+                <option value="1.8" label="1.8x">
+                <option value="1.9" label="1.9x">
+                <option value="2" label="2x">
+                <option value="2.5" label="2.5x">
+                <option value="3" label="3x">
+            </select>
+        </label>
+
+
+
+        <div id="status"></div>
+        <button id="save">Save</button>
+
+        <script src="options.js"></script>
+    </body>
+</html>

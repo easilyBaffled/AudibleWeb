@@ -1,0 +1,37 @@
+{
+    "name": "speaker",
+    "description": "",
+    "version": "1.0",
+    "manifest_version": 2,
+    "browser_action": {
+        "default_icon": "icons/idle.png"
+    },
+    "permissions": [
+      "tabs",
+      "storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["contentScript.js"]
+        }
+    ],
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "options_page": "options/options.html",
+    "commands": {
+        "play/pause": {
+            "suggested_key": {
+                "mac": "MacCtrl+X"
+            },
+            "description": "Play/pause selected text"
+        },
+        "cancel": {
+            "suggested_key": {
+                "mac": "MacCtrl+Z"
+            },
+            "description": "Cancel queued text"
+        }
+    }
+}
