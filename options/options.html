@@ -1,46 +1,110 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Read To Me Extension Options</title>
-    </head>
-    <body>
+<head>
+    <title>Read To Me Extension Options</title>
+</head>
 
-        Favorite color:
-        <form>
-            <label for="voiceSelect">Voices</label>
-            <select id="voiceSelect"></select>
-            <label>
-                Sample Text:
-                <input id="sampleTextInput" value="Select a Voice to try">
-            </label>
-            <input type="submit" value="Try This Voice">
-        </form>
+<body>
+<form>
+    <label for="voiceSelect">Voices</label>
+    <select id="voiceSelect">
+        "<option value="Alex" selected >Alex(en-US)</option>
+        <option value="Alice">Alice(it-IT)</option>
+        <option value="Alva">Alva(sv-SE)</option>
+        <option value="Amelie">Amelie(fr-CA)</option>
+        <option value="Anna">Anna(de-DE)</option>
+        <option value="Carmit">Carmit(he-IL)</option>
+        <option value="Damayanti">Damayanti(id-ID)</option>
+        <option value="Daniel">Daniel(en-GB)</option>
+        <option value="Diego">Diego(es-AR)</option>
+        <option value="Ellen">Ellen(nl-BE)</option>
+        <option value="Fiona">Fiona(en)</option>
+        <option value="Fred">Fred(en-US)</option>
+        <option value="Ioana">Ioana(ro-RO)</option>
+        <option value="Joana">Joana(pt-PT)</option>
+        <option value="Jorge">Jorge(es-ES)</option>
+        <option value="Juan">Juan(es-MX)</option>
+        <option value="Kanya">Kanya(th-TH)</option>
+        <option value="Karen">Karen(en-AU)</option>
+        <option value="Kyoko">Kyoko(ja-JP)</option>
+        <option value="Laura">Laura(sk-SK)</option>
+        <option value="Lekha">Lekha(hi-IN)</option>
+        <option value="Luca">Luca(it-IT)</option>
+        <option value="Luciana">Luciana(pt-BR)</option>
+        <option value="Maged">Maged(ar-SA)</option>
+        <option value="Mariska">Mariska(hu-HU)</option>
+        <option value="Mei-Jia">Mei-Jia(zh-TW)</option>
+        <option value="Melina">Melina(el-GR)</option>
+        <option value="Milena">Milena(ru-RU)</option>
+        <option value="Moira">Moira(en-IE)</option>
+        <option value="Monica">Monica(es-ES)</option>
+        <option value="Nora">Nora(nb-NO)</option>
+        <option value="Paulina">Paulina(es-MX)</option>
+        <option value="Samantha">Samantha(en-US)</option>
+        <option value="Sara">Sara(da-DK)</option>
+        <option value="Satu">Satu(fi-FI)</option>
+        <option value="Sin-ji">Sin-ji(zh-HK)</option>
+        <option value="Tessa">Tessa(en-ZA)</option>
+        <option value="Thomas">Thomas(fr-FR)</option>
+        <option value="Ting-Ting">Ting-Ting(zh-CN)</option>
+        <option value="Veena">Veena(en-IN)</option>
+        <option value="Victoria">Victoria(en-US)</option>
+        <option value="Xander">Xander(nl-NL)</option>
+        <option value="Yelda">Yelda(tr-TR)</option>
+        <option value="Yuna">Yuna(ko-KR)</option>
+        <option value="Yuri">Yuri(ru-RU)</option>
+        <option value="Zosia">Zosia(pl-PL)</option>
+        <option value="Zuzana">Zuzana(cs-CZ)</option>
+        <option value="Google Deutsch">Google Deutsch(de-DE)</option>
+        <option value="Google US English">Google US English(en-US)</option>
+        <option value="Google UK English Female">Google UK English Female(en-GB)</option>
+        <option value="Google UK English Male">Google UK English Male(en-GB)</option>
+        <option value="Google español">Google español(es-ES)</option>
+        <option value="Google español de Estados Unidos">Google español de Estados Unidos(es-US)</option>
+        <option value="Google français">Google français(fr-FR)</option>
+        <option value="Google हिन्दी">Google हिन्दी(hi-IN)</option>
+        <option value="Google Bahasa Indonesia">Google Bahasa Indonesia(id-ID)</option>
+        <option value="Google italiano">Google italiano(it-IT)</option>
+        <option value="Google 日本語">Google 日本語(ja-JP)</option>
+        <option value="Google 한국의">Google 한국의(ko-KR)</option>
+        <option value="Google Nederlands">Google Nederlands(nl-NL)</option>
+        <option value="Google polski">Google polski(pl-PL)</option>
+        <option value="Google português do Brasil">Google português do Brasil(pt-BR)</option>
+        <option value="Google русский">Google русский(ru-RU)</option>
+        <option value="Google 普通话（中国大陆）">Google 普通话（中国大陆）(zh-CN)</option>
+        <option value="Google 粤語（香港）">Google 粤語（香港）(zh-HK)</option>
+        <option value="Google 國語（臺灣）">Google 國語（臺灣）(zh-TW)</option>
+    </select>
+    <label>
+        Sample Text:
+        <input id="sampleTextInput" value="Select a Voice to try" />
+    </label>
+    <input type="submit" value="Try This Voice" />
+</form>
 
-        <label>
-            Reading Rate:
-            <select id="rateSelect">
-                <option value="0.2" label=".2x">
-                <option value="0.5" label=".5x">
-                <option value="1" label="1x">
-                <option value="1.2" label="1.2x">
-                <option value="1.3" label="1.3x">
-                <option value="1.4" label="1.4x">
-                <option value="1.5" label="1.5x">
-                <option value="1.6" label="1.6x">
-                <option value="1.7" label="1.7x">
-                <option value="1.8" label="1.8x">
-                <option value="1.9" label="1.9x">
-                <option value="2" label="2x">
-                <option value="2.5" label="2.5x">
-                <option value="3" label="3x">
-            </select>
-        </label>
+<label>
+    Reading Rate:
+    <select id="rateSelect">
+        <option value="0.2">0.2x</option>
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.1">1.1x</option>
+        <option value="1.2">1.2x</option>
+        <option value="1.3">1.3x</option>
+        <option value="1.4">1.4x</option>
+        <option value="1.5">1.5x</option>
+        <option value="1.6">1.6x</option>
+        <option value="1.7">1.7x</option>
+        <option value="1.8">1.8x</option>
+        <option value="1.9">1.9x</option>
+        <option value="2">2x</option>
+        <option value="2.5">2.5x</option>
+        <option value="3">3x</option>
+    </select>
+</label>
 
+<h3 id="status"></h3>
 
-
-        <div id="status"></div>
-        <button id="save">Save</button>
-
-        <script src="options.js"></script>
-    </body>
+<script src="options.js"></script>
+</body>
 </html>
