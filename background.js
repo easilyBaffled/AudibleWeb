@@ -13,7 +13,8 @@ const createNewSpeech = ({ text, voice = 'Alex', rate = 1 }) =>
     Object.assign(new SpeechSynthesisUtterance(text), {
         voice: speechSynthesis.getVoices().find(v => v.voice === voice),
         rate,
-        volume: 1
+        volume: 1,
+        onend: stopPlaying
     });
 
 /**
