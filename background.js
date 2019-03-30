@@ -1,21 +1,8 @@
+// import * as synth from 'state-speech-synth'
+import * as synth from '/web_modules/state-speech-synth.js';
+
 const errorMessage =
     "Sorry, I didn't catch that. Can you please reload the Page. Thank you.";
-
-/**
- *
- * @param {Object} options
- * @param {string} options.text
- * @param {number} options.rate
- * @param {string} options.voice
- * @returns {SpeechSynthesisUtterance}
- */
-const createNewSpeech = ({ text, voice = 'Alex', rate = 1 }) =>
-    Object.assign(new SpeechSynthesisUtterance(text), {
-        voice: speechSynthesis.getVoices().find(v => v.voice === voice),
-        rate,
-        volume: 1,
-        onend: stopPlaying
-    });
 
 /**
  * Get out of deep callbacks by converting their calling functions to Promises
@@ -59,76 +46,58 @@ const getSpeakerOptions = text =>
         chrome.storage.sync.get(['rate', 'voice'], resolve)
     ).then(({ rate, voice }) => ({ text, rate, voice }));
 
-let currentState = {
-    playing: false,
-    paused: false,
-    idle: true
-};
-
-/**
- * Values that are you passed in will be undefined and evaluate to false when checking state.
- *
- * @param {Object<string, boolean>} currentState
- * @param {boolean=} currentState.playing
- * @param {boolean=} currentState.paused
- * @param {boolean=} currentState.idle
- */
-const setCurrentState = ({ playing, paused, idle }) => {
-    currentState = {
-        playing,
-        paused,
-        idle
-    };
-};
-
-const playNewText = () => {
+function playNewText() {
     getActiveTabId()
         .then(getSelectedText)
         .then(getSpeakerOptions)
         .then(({ text, rate, voice }) => {
-            speechSynthesis.speak(createNewSpeech({ text, rate, voice }));
-            setCurrentState({ playing: true });
-            chrome.browserAction.setIcon({ path: 'icons/play.png' });
+            console.log({ rate, voice });
+            synth.speak(text, { rate, voice });
+            resumedSpeaking();
         })
         .catch(console.error);
-};
+}
 
-const resumeSpeaking = () => {
-    speechSynthesis.resume();
-    setCurrentState({ playing: true });
+function resumedSpeaking() {
     chrome.browserAction.setIcon({ path: 'icons/play.png' });
-};
+    return synth.pause;
+}
 
-const pauseSpeaking = () => {
-    speechSynthesis.pause();
-    setCurrentState({ paused: true });
+function pausedSpeaking() {
     chrome.browserAction.setIcon({ path: 'icons/pause.png' });
-};
+    return synth.resume;
+}
 
-const stopPlaying = () => {
-    speechSynthesis.cancel();
-    setCurrentState({ idle: true });
+function stoppedPlaying() {
     chrome.browserAction.setIcon({ path: 'icons/idle.png' });
-};
+    return playNewText;
+}
 
-/**
- * @param {Object<string, boolean>} possibleTransition
- * @param {boolean?} possibleTransition.play_pause
- * @param {boolean?} possibleTransition.cancel
- */
-const setState = ({ play_pause, cancel }) => {
-    const { playing, paused, idle } = currentState;
-    const stateTransitions = {
-        [play_pause && idle]: playNewText,
-        [play_pause && paused]: resumeSpeaking,
-        [play_pause && playing]: pauseSpeaking,
-        [cancel]: stopPlaying
+// TODO: look into encoprerating this into the state change handler below with a React Hooks `useEffect` like system
+chrome.commands.onCommand.addListener(command =>
+    command === 'cancel' ? synth.cancel() : playPauseAction()
+);
+
+let playPauseAction = playNewText;
+
+const createCommandLister = func =>
+    function commandLister(command) {
+        command === 'cancel' ? synth.cancel() : func();
     };
 
-    stateTransitions[true]();
+const changeChangeMap = {
+    [synth.IDLE]: stoppedPlaying,
+    [synth.PLAYING]: resumedSpeaking,
+    [synth.PAUSED]: pausedSpeaking
 };
 
-chrome.commands.onCommand.addListener(command => {
-    const commandKey = command.replace('/', '_'); // Command 'play/pause' is not a valid key so `replace` makes it valid, without changing the other command strings
-    setState({ [commandKey]: true });
+synth.onStateChange(currentState => {
+    console.log(currentState);
+    try {
+        const nextAction = (changeChangeMap[currentState] || (() => ''))();
+        chrome.commands.onCommand.removeListener();
+    } catch (e) {
+        console.error(e);
+        console.log(currentState, synth);
+    }
 });
