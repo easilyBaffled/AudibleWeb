@@ -1,20 +1,7 @@
+import * as synth from '/web_modules/state-speech-synth.js';
+
 const inputForm = document.querySelector('form');
 const inputTxt = document.querySelector('input');
-
-/**
- *
- * @param {Object} options
- * @param {string} options.text
- * @param {number} options.rate
- * @param {string} options.voice
- * @returns {SpeechSynthesisUtterance}
- */
-const createNewSpeech = ({ text, voice = 'Alex', rate = 1 }) =>
-    Object.assign(new SpeechSynthesisUtterance(text), {
-        voice: speechSynthesis.getVoices().find(v => v.voice === voice),
-        rate,
-        volume: 1
-    });
 
 let timeoutID;
 /**
@@ -33,10 +20,13 @@ const confirmSettingSaved = settingName => {
 };
 
 inputForm.addEventListener('submit', () => {
-    chrome.storage.sync.get(['rate', 'voice'], ({rate, voice}) => {
-        speechSynthesis.speak( createNewSpeech( { text: inputTxt.value, voice, rate } ) );
-    });
-} );
+    chrome.storage.sync.get(
+        ['rate', 'voice'],
+        ({ rate = '1', voice = 'Alex' }) => {
+            synth.speak(inputTxt.value, { voice, rate });
+        }
+    );
+});
 
 document.getElementById('voiceSelect').addEventListener('change', e => {
     const { value } = e.target;
@@ -52,4 +42,10 @@ document.getElementById('rateSelect').addEventListener('change', e => {
         confirmSettingSaved('Rate ' + value);
         chrome.extension.sendRequest({ updateSettings: { rate: value } });
     });
+});
+
+chrome.storage.sync.get(['rate', 'voice'], ({ rate = '1', voice = 'Alex' }) => {
+    console.log(rate, voice);
+    document.getElementById('rateSelect').value = rate;
+    document.getElementById('voiceSelect').value = voice;
 });
