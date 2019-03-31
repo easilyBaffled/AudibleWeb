@@ -53,49 +53,34 @@ function playNewText() {
         .then(({ text, rate, voice }) => {
             console.log({ rate, voice });
             synth.speak(text, { rate, voice });
-            resumedSpeaking();
         })
         .catch(console.error);
 }
 
-function resumedSpeaking() {
-    chrome.browserAction.setIcon({ path: 'icons/play.png' });
-    return synth.pause;
-}
-
-function pausedSpeaking() {
-    chrome.browserAction.setIcon({ path: 'icons/pause.png' });
-    return synth.resume;
-}
-
-function stoppedPlaying() {
-    chrome.browserAction.setIcon({ path: 'icons/idle.png' });
-    return playNewText;
-}
-
 // TODO: look into encoprerating this into the state change handler below with a React Hooks `useEffect` like system
-chrome.commands.onCommand.addListener(command =>
-    command === 'cancel' ? synth.cancel() : playPauseAction()
-);
+chrome.commands.onCommand.addListener(command => {
+    try {
+        command === 'cancel' ? synth.cancel() : playPauseAction();
+    } catch (e) {
+        console.error(e);
+        console.log(command, playPauseAction);
+    }
+});
 
 let playPauseAction = playNewText;
 
-const createCommandLister = func =>
-    function commandLister(command) {
-        command === 'cancel' ? synth.cancel() : func();
-    };
-
 const changeChangeMap = {
-    [synth.IDLE]: stoppedPlaying,
-    [synth.PLAYING]: resumedSpeaking,
-    [synth.PAUSED]: pausedSpeaking
+    [synth.IDLE]: { icon: 'icons/idle.png', action: playNewText },
+    [synth.PLAYING]: { icon: 'icons/play.png', action: synth.pause },
+    [synth.PAUSED]: { icon: 'icons/pause.png', action: synth.resume }
 };
 
 synth.onStateChange(currentState => {
     console.log(currentState);
     try {
-        const nextAction = (changeChangeMap[currentState] || (() => ''))();
-        chrome.commands.onCommand.removeListener();
+        const { icon, action } = changeChangeMap[currentState] || {};
+        if (icon) chrome.browserAction.setIcon({ path: icon });
+        if (action) playPauseAction = action;
     } catch (e) {
         console.error(e);
         console.log(currentState, synth);
