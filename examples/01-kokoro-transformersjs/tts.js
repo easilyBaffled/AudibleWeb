@@ -1,11 +1,12 @@
-// Kokoro-82M TTS via transformers.js.
-// First run downloads ~92 MB (quantized) from HuggingFace and caches it in IndexedDB.
+// Kokoro-82M TTS via @huggingface/transformers v3.
+// Model (~82 MB, q8 quantized) is fetched from HuggingFace on first use and
+// cached in the browser's Cache API. Subsequent uses are instant and offline.
 // Requires vendor/transformers.min.js — see vendor/SETUP.md.
 
 import { pipeline, env } from './vendor/transformers.min.js';
 
 env.allowLocalModels = false;
-env.useBrowserCache = true;
+env.allowRemoteModels = true;
 
 export const VOICES = [
   { id: 'af_bella',   name: 'Bella (US Female)'  },
@@ -20,11 +21,13 @@ let synthesizer = null;
 
 async function getSynthesizer(onProgress) {
   if (synthesizer) return synthesizer;
-  synthesizer = await pipeline('text-to-speech', 'Xenova/kokoro-en-v0_19', {
-    quantized: true,
+  synthesizer = await pipeline('text-to-speech', 'onnx-community/Kokoro-82M-v1.0', {
+    dtype: 'q8',
     progress_callback: info => {
-      if (info.status === 'downloading') {
-        onProgress?.(info.progress / 100, `Downloading model… ${Math.round(info.progress)}%`);
+      if (info.status === 'progress' && info.total) {
+        onProgress?.(info.loaded / info.total, `Downloading model… ${Math.round(info.loaded / info.total * 100)}%`);
+      } else if (info.status === 'loading') {
+        onProgress?.(0, `Loading ${info.name ?? 'model'}…`);
       }
     },
   });
