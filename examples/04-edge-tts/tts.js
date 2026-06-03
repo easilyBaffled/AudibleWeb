@@ -22,9 +22,15 @@ function buildSsml(text, voice, speed) {
 
 function synthesizeChunk(text, voice, speed) {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(`${WSS_URL}?TrustedClientToken=${TOKEN}`);
+    // ConnectionId is required by the Edge speech endpoint.
+    const ws = new WebSocket(`${WSS_URL}?TrustedClientToken=${TOKEN}&ConnectionId=${uuid()}`);
     ws.binaryType = 'arraybuffer';
     const parts = [];
+
+    // Reject if the server closes without completing a turn (e.g. auth failure, bad token).
+    ws.onclose = event => {
+      if (!event.wasClean) reject(new Error(`WebSocket closed unexpectedly (code ${event.code})`));
+    };
 
     ws.onopen = () => {
       ws.send(

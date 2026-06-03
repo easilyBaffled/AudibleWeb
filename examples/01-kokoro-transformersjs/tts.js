@@ -1,6 +1,10 @@
-// Kokoro-82M TTS via @huggingface/transformers v3.
-// Designed to run inside a service worker (no DOM, single-threaded WASM).
-// WASM binaries for onnxruntime are fetched from CDN at runtime (see manifest host_permissions).
+// Meta MMS (Massively Multilingual Speech) TTS via @xenova/transformers v2.
+// Each language is a separate ~40 MB ONNX model, fetched from HuggingFace on first use.
+// Fully self-contained — no cross-repo tokenizer dependencies.
+//
+// Note: Kokoro-82M was the original intent but its HuggingFace tokenizer config
+// references a gated/private Xenova repo, making it inaccessible without auth.
+// MMS-TTS is Meta's open-weight multilingual TTS and is a solid replacement.
 
 export { VOICES } from './voices.js';
 
@@ -8,28 +12,24 @@ import { pipeline, env } from './vendor/transformers.min.js';
 
 env.allowLocalModels  = false;
 env.allowRemoteModels = true;
-
-// Service workers can't spawn Workers, so ONNX must run directly (no proxy).
 env.backends.onnx.wasm.proxy      = false;
 env.backends.onnx.wasm.numThreads = 1;
-// Point to CDN for the ort-wasm binary files (fetched via fetch(), not <script>).
-env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/';
+// Co-located dist/ ensures WASM binaries match the bundled ort version.
+env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/';
 
-let synthesizer = null;
+const synthesizers = {};
 
-async function getSynthesizer(onProgress) {
-  if (synthesizer) return synthesizer;
-  synthesizer = await pipeline('text-to-speech', 'onnx-community/Kokoro-82M-v1.0', {
-    dtype: 'q8',
+async function getSynthesizer(lang, onProgress) {
+  if (synthesizers[lang]) return synthesizers[lang];
+  synthesizers[lang] = await pipeline('text-to-speech', `Xenova/mms-tts-${lang}`, {
+    quantized: true,
     progress_callback: info => {
       if (info.status === 'progress' && info.total) {
         onProgress?.(info.loaded / info.total, `Downloading model… ${Math.round(info.loaded / info.total * 100)}%`);
-      } else if (info.status === 'loading') {
-        onProgress?.(0, `Loading ${info.name ?? 'model'}…`);
       }
     },
   });
-  return synthesizer;
+  return synthesizers[lang];
 }
 
 function splitSentences(text) {
@@ -52,15 +52,16 @@ function encodeWav(float32, sampleRate) {
   return buf;
 }
 
-export async function synthesize(text, { voice = 'af_bella', speed = 1.0 } = {}, onProgress = null) {
-  const synth  = await getSynthesizer(onProgress);
+// speed is not supported by MMS-TTS and is ignored.
+export async function synthesize(text, { voice = 'eng' } = {}, onProgress = null) {
+  const synth  = await getSynthesizer(voice, onProgress);
   const chunks = splitSentences(text);
   const all    = [];
-  let sampleRate = 24000;
+  let sampleRate = 16000;
 
   for (let i = 0; i < chunks.length; i++) {
     onProgress?.((i + 0.5) / chunks.length, `Chunk ${i + 1} / ${chunks.length}…`);
-    const out  = await synth(chunks[i], { voice, speed });
+    const out  = await synth(chunks[i]);
     sampleRate = out.sampling_rate;
     for (const s of out.audio) all.push(s);
   }

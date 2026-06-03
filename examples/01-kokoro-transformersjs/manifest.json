@@ -1,6 +1,6 @@
 {
-  "name": "AudibleWeb — Kokoro TTS",
-  "description": "High-quality neural TTS using Kokoro-82M via transformers.js. No server needed.",
+  "name": "AudibleWeb — MMS TTS",
+  "description": "Multilingual neural TTS using Meta MMS via transformers.js. No server needed.",
   "version": "1.0",
   "manifest_version": 3,
   "action": {

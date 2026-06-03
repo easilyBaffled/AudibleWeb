@@ -9,7 +9,8 @@ env.allowLocalModels  = false;
 env.allowRemoteModels = true;
 env.backends.onnx.wasm.proxy      = false;
 env.backends.onnx.wasm.numThreads = 1;
-env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/';
+// Use the same CDN package so WASM binaries match the bundled ort version exactly.
+env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/';
 
 // Speaker embedding URLs from the Xenova CMU Arctic dataset.
 const SPEAKER_URLS = {
