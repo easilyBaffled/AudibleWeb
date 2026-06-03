@@ -1,5 +1,6 @@
-import { VOICES, synthesize } from './tts.js';
+import { VOICES } from './voices.js';
 
+// Populate voice dropdown from voices.js (doesn't load the heavy ML library).
 const voiceSelect = document.getElementById('voice');
 VOICES.forEach(({ id, name }) => {
   const opt = document.createElement('option');
@@ -9,59 +10,117 @@ VOICES.forEach(({ id, name }) => {
 });
 
 const speedSlider = document.getElementById('speed');
-const speedVal = document.getElementById('speedVal');
+const speedVal   = document.getElementById('speedVal');
 speedSlider.addEventListener('input', () => { speedVal.textContent = `${speedSlider.value}×`; });
 
-const generateBtn = document.getElementById('generateBtn');
-const downloadBtn = document.getElementById('downloadBtn');
+// ── IndexedDB helpers ─────────────────────────────────────────────────────────
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('tts-jobs', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('jobs', { keyPath: 'id' });
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function getJobBuffer() {
+  const db  = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction('jobs', 'readonly');
+    const req = tx.objectStore('jobs').get('current');
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+const formView    = document.getElementById('formView');
+const statusView  = document.getElementById('statusView');
+const hint        = document.getElementById('hint');
 const progressWrap = document.getElementById('progressWrap');
 const progressBar = document.getElementById('progress');
-const status = document.getElementById('status');
+const statusMsg   = document.getElementById('statusMsg');
+const errorMsg    = document.getElementById('errorMsg');
+const downloadBtn = document.getElementById('downloadBtn');
 
-let result = null;
+function showForm() {
+  formView.style.display   = '';
+  statusView.style.display = 'none';
+}
 
-generateBtn.addEventListener('click', async () => {
-  const text = document.getElementById('text').value.trim();
-  if (!text) return;
-
-  generateBtn.disabled = true;
+function showStatus(job) {
+  formView.style.display   = 'none';
+  statusView.style.display = '';
+  errorMsg.style.display   = 'none';
   downloadBtn.style.display = 'none';
-  progressWrap.style.display = 'block';
-  progressBar.removeAttribute('value'); // indeterminate
-  result = null;
+  progressWrap.style.display = '';
 
-  try {
-    result = await synthesize(
-      text,
-      { voice: voiceSelect.value, speed: parseFloat(speedSlider.value) },
-      (fraction, message) => {
-        status.textContent = message || 'Synthesizing…';
-        if (fraction > 0) {
-          progressBar.value = fraction;
-          progressBar.max = 1;
-        } else {
-          progressBar.removeAttribute('value');
-        }
-      }
-    );
-    const kb = (result.buffer.byteLength / 1024).toFixed(0);
-    status.textContent = `Ready — ${kb} KB (.${result.ext})`;
-    downloadBtn.style.display = 'block';
-  } catch (e) {
-    status.textContent = `Error: ${e.message}`;
-  } finally {
-    generateBtn.disabled = false;
+  if (job.status === 'running') {
+    hint.textContent = 'Working in background — safe to close this popup.';
+    progressBar.value = job.progress ?? 0;
+    statusMsg.textContent = job.message ?? 'Synthesizing…';
+  } else if (job.status === 'done') {
+    hint.textContent = '';
     progressWrap.style.display = 'none';
+    downloadBtn.style.display = 'block';
+    downloadBtn.textContent = `⬇ Download .${job.ext}`;
+    downloadBtn.dataset.ext      = job.ext;
+    downloadBtn.dataset.mimeType = job.mimeType;
+  } else if (job.status === 'error') {
+    hint.textContent = '';
+    progressWrap.style.display = 'none';
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = `Error: ${job.error}`;
   }
+}
+
+function applyUpdate(job) {
+  if (!job || job.status === 'idle') { showForm(); return; }
+  showStatus(job);
+}
+
+// ── Init: read current job state ──────────────────────────────────────────────
+
+chrome.storage.local.get('job', ({ job }) => applyUpdate(job ?? null));
+
+// Listen for live updates from service worker while popup is open.
+chrome.runtime.onMessage.addListener(msg => {
+  if (msg.type === 'JOB_UPDATE') applyUpdate(msg.job);
 });
 
-downloadBtn.addEventListener('click', () => {
-  if (!result) return;
-  const blob = new Blob([result.buffer], { type: result.mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `tts-output.${result.ext}`;
+// ── Generate ──────────────────────────────────────────────────────────────────
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const text = document.getElementById('text').value.trim();
+  if (!text) return;
+  chrome.runtime.sendMessage({
+    type:   'START_SYNTHESIS',
+    text,
+    params: { voice: voiceSelect.value, speed: parseFloat(speedSlider.value) },
+  });
+  showStatus({ status: 'running', progress: 0, message: 'Starting…' });
+});
+
+// ── Download ──────────────────────────────────────────────────────────────────
+
+downloadBtn.addEventListener('click', async () => {
+  const record = await getJobBuffer();
+  if (!record?.buffer) return;
+  const blob = new Blob([record.buffer], { type: downloadBtn.dataset.mimeType });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `tts-output.${downloadBtn.dataset.ext}`,
+  });
   a.click();
   URL.revokeObjectURL(url);
+});
+
+// ── New job ───────────────────────────────────────────────────────────────────
+
+document.getElementById('newJobBtn').addEventListener('click', () => {
+  chrome.storage.local.set({ job: { status: 'idle' } });
+  showForm();
 });

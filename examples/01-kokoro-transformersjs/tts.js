@@ -1,21 +1,19 @@
 // Kokoro-82M TTS via @huggingface/transformers v3.
-// Model (~82 MB, q8 quantized) is fetched from HuggingFace on first use and
-// cached in the browser's Cache API. Subsequent uses are instant and offline.
-// Requires vendor/transformers.min.js — see vendor/SETUP.md.
+// Designed to run inside a service worker (no DOM, single-threaded WASM).
+// WASM binaries for onnxruntime are fetched from CDN at runtime (see manifest host_permissions).
+
+export { VOICES } from './voices.js';
 
 import { pipeline, env } from './vendor/transformers.min.js';
 
-env.allowLocalModels = false;
+env.allowLocalModels  = false;
 env.allowRemoteModels = true;
 
-export const VOICES = [
-  { id: 'af_bella',   name: 'Bella (US Female)'  },
-  { id: 'af_nicole',  name: 'Nicole (US Female)'  },
-  { id: 'am_adam',    name: 'Adam (US Male)'      },
-  { id: 'am_michael', name: 'Michael (US Male)'   },
-  { id: 'bf_emma',    name: 'Emma (UK Female)'    },
-  { id: 'bm_george',  name: 'George (UK Male)'    },
-];
+// Service workers can't spawn Workers, so ONNX must run directly (no proxy).
+env.backends.onnx.wasm.proxy      = false;
+env.backends.onnx.wasm.numThreads = 1;
+// Point to CDN for the ort-wasm binary files (fetched via fetch(), not <script>).
+env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/';
 
 let synthesizer = null;
 
@@ -41,7 +39,7 @@ function splitSentences(text) {
 function encodeWav(float32, sampleRate) {
   const dataLen = float32.length * 2;
   const buf = new ArrayBuffer(44 + dataLen);
-  const v = new DataView(buf);
+  const v   = new DataView(buf);
   const str = (off, s) => [...s].forEach((c, i) => v.setUint8(off + i, c.charCodeAt(0)));
   str(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true);
   str(8, 'WAVE'); str(12, 'fmt ');
@@ -55,18 +53,17 @@ function encodeWav(float32, sampleRate) {
 }
 
 export async function synthesize(text, { voice = 'af_bella', speed = 1.0 } = {}, onProgress = null) {
-  const synth = await getSynthesizer(onProgress);
+  const synth  = await getSynthesizer(onProgress);
   const chunks = splitSentences(text);
-  const allSamples = [];
+  const all    = [];
   let sampleRate = 24000;
 
   for (let i = 0; i < chunks.length; i++) {
     onProgress?.((i + 0.5) / chunks.length, `Chunk ${i + 1} / ${chunks.length}…`);
-    const out = await synth(chunks[i], { voice, speed });
+    const out  = await synth(chunks[i], { voice, speed });
     sampleRate = out.sampling_rate;
-    for (const s of out.audio) allSamples.push(s);
+    for (const s of out.audio) all.push(s);
   }
 
-  onProgress?.(1, 'Encoding…');
-  return { buffer: encodeWav(new Float32Array(allSamples), sampleRate), mimeType: 'audio/wav', ext: 'wav' };
+  return { buffer: encodeWav(new Float32Array(all), sampleRate), mimeType: 'audio/wav', ext: 'wav' };
 }

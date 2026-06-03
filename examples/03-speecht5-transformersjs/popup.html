@@ -6,53 +6,72 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { width: 380px; padding: 16px; font-family: system-ui, sans-serif; font-size: 14px; color: #202124; }
     h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+
+    /* Form state */
     textarea {
       width: 100%; height: 130px; padding: 8px; border: 1px solid #dadce0;
       border-radius: 6px; resize: vertical; font: inherit;
     }
     .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
     .field label { display: block; font-size: 11px; color: #5f6368; margin-bottom: 4px; }
-    select, input[type=range] { width: 100%; }
-    select { padding: 4px 6px; border: 1px solid #dadce0; border-radius: 4px; font: inherit; }
+    select { width: 100%; padding: 4px 6px; border: 1px solid #dadce0; border-radius: 4px; font: inherit; }
     .speed-row { display: flex; justify-content: space-between; align-items: center; }
     .speed-row span { font-size: 11px; color: #5f6368; min-width: 28px; text-align: right; }
+    input[type=range] { width: 100%; }
+
+    /* Shared buttons */
     button {
       width: 100%; padding: 9px; border: none; border-radius: 6px;
-      font: inherit; font-weight: 500; cursor: pointer;
+      font: inherit; font-weight: 500; cursor: pointer; margin-top: 4px;
     }
-    #generateBtn { background: #1a73e8; color: white; margin-top: 2px; }
+    #generateBtn { background: #1a73e8; color: white; }
     #generateBtn:disabled { background: #a8c7fa; cursor: default; }
-    #downloadBtn {
-      background: #188038; color: white; margin-top: 8px;
-      display: none;
-    }
-    .progress-wrap { margin-top: 8px; display: none; }
-    progress { width: 100%; height: 4px; border-radius: 2px; }
-    #status { margin-top: 6px; font-size: 12px; color: #5f6368; min-height: 16px; }
+
+    /* Status state */
+    #statusView { display: none; }
+    .hint { font-size: 12px; color: #5f6368; margin-bottom: 12px; }
+    .progress-wrap { margin: 8px 0; }
+    progress { width: 100%; height: 6px; border-radius: 3px; }
+    #statusMsg { font-size: 12px; color: #5f6368; margin-top: 6px; min-height: 16px; }
+    #downloadBtn { background: #188038; color: white; display: none; }
+    #errorMsg { color: #c5221f; font-size: 13px; margin: 8px 0; display: none; }
+    #newJobBtn { background: #f1f3f4; color: #202124; border: 1px solid #dadce0; }
   </style>
 </head>
 <body>
-  <h2>Text to Speech</h2>
-  <textarea id="text" placeholder="Paste or type text here…"></textarea>
-  <div class="controls">
-    <div class="field">
-      <label>Voice</label>
-      <select id="voice"></select>
-    </div>
-    <div class="field">
-      <label>Speed</label>
-      <div class="speed-row">
-        <input type="range" id="speed" min="0.5" max="2.0" step="0.1" value="1.0">
-        <span id="speedVal">1.0×</span>
+  <!-- Form: shown when idle -->
+  <div id="formView">
+    <h2>Text to Speech</h2>
+    <textarea id="text" placeholder="Paste or type text here…"></textarea>
+    <div class="controls">
+      <div class="field">
+        <label>Voice</label>
+        <select id="voice"></select>
+      </div>
+      <div class="field">
+        <label>Speed</label>
+        <div class="speed-row">
+          <input type="range" id="speed" min="0.5" max="2.0" step="0.1" value="1.0">
+          <span id="speedVal">1.0×</span>
+        </div>
       </div>
     </div>
+    <button id="generateBtn">Generate</button>
   </div>
-  <button id="generateBtn">Generate</button>
-  <div class="progress-wrap" id="progressWrap">
-    <progress id="progress"></progress>
+
+  <!-- Status: shown when running or done -->
+  <div id="statusView">
+    <h2>Text to Speech</h2>
+    <p class="hint" id="hint"></p>
+    <div class="progress-wrap" id="progressWrap">
+      <progress id="progress" max="1"></progress>
+      <p id="statusMsg"></p>
+    </div>
+    <p id="errorMsg"></p>
+    <button id="downloadBtn">⬇ Download</button>
+    <button id="newJobBtn" style="margin-top:8px">New conversion</button>
   </div>
-  <p id="status"></p>
-  <button id="downloadBtn">⬇ Download</button>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>

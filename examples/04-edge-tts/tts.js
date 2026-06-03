@@ -1,41 +1,30 @@
-// Edge TTS — Microsoft's production neural TTS, same engine as Edge browser's Read Aloud.
-// Communicates via WebSocket. No API key, no server setup, just internet access.
-// Returns real MP3 bytes that can be downloaded directly.
+// Edge TTS — Microsoft's production neural TTS, same engine as Edge browser Read Aloud.
+// Communicates via WebSocket; works natively in a service worker with no extra libraries.
+
+export { VOICES } from './voices.js';
 
 const WSS_URL = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
-const TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'; // public token used by Edge browser
-
-export const VOICES = [
-  { id: 'en-US-JennyNeural',      name: 'Jenny (US Female)'      },
-  { id: 'en-US-AriaNeural',       name: 'Aria (US Female)'       },
-  { id: 'en-US-GuyNeural',        name: 'Guy (US Male)'          },
-  { id: 'en-US-EricNeural',       name: 'Eric (US Male)'         },
-  { id: 'en-US-MichelleNeural',   name: 'Michelle (US Female)'   },
-  { id: 'en-GB-SoniaNeural',      name: 'Sonia (UK Female)'      },
-  { id: 'en-GB-RyanNeural',       name: 'Ryan (UK Male)'         },
-  { id: 'en-AU-NatashaNeural',    name: 'Natasha (AU Female)'    },
-  { id: 'en-IN-NeerjaNeural',     name: 'Neerja (IN Female)'     },
-];
+const TOKEN   = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 
 function uuid() { return crypto.randomUUID().replace(/-/g, ''); }
 function ts()   { return new Date().toISOString().replace(/:/g, '-').replace('Z', ''); }
 
 function ratePercent(speed) {
-  const pct = Math.round((speed - 1) * 100);
-  return pct >= 0 ? `+${pct}%` : `${pct}%`;
+  const p = Math.round((speed - 1) * 100);
+  return p >= 0 ? `+${p}%` : `${p}%`;
 }
 
 function buildSsml(text, voice, speed) {
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-    `<voice name='${voice}'><prosody rate='${ratePercent(speed)}' pitch='+0Hz'>${escaped}</prosody></voice></speak>`;
+    `<voice name='${voice}'><prosody rate='${ratePercent(speed)}' pitch='+0Hz'>${esc}</prosody></voice></speak>`;
 }
 
 function synthesizeChunk(text, voice, speed) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`${WSS_URL}?TrustedClientToken=${TOKEN}`);
     ws.binaryType = 'arraybuffer';
-    const chunks = [];
+    const parts = [];
 
     ws.onopen = () => {
       ws.send(
@@ -53,20 +42,19 @@ function synthesizeChunk(text, voice, speed) {
 
     ws.onmessage = event => {
       if (event.data instanceof ArrayBuffer) {
-        // Strip the text header before the audio payload.
         const view = new Uint8Array(event.data);
-        const sep = new TextEncoder().encode('Path:audio\r\n\r\n');
+        const sep  = new TextEncoder().encode('Path:audio\r\n\r\n');
         let offset = 0;
         for (let i = 0; i <= view.length - sep.length; i++) {
           if (sep.every((b, j) => view[i + j] === b)) { offset = i + sep.length; break; }
         }
-        chunks.push(event.data.slice(offset));
+        parts.push(event.data.slice(offset));
       } else if (typeof event.data === 'string' && event.data.includes('Path:turn.end')) {
         ws.close();
-        const total = chunks.reduce((n, c) => n + c.byteLength, 0);
-        const out = new Uint8Array(total);
+        const total = parts.reduce((n, p) => n + p.byteLength, 0);
+        const out   = new Uint8Array(total);
         let pos = 0;
-        for (const c of chunks) { out.set(new Uint8Array(c), pos); pos += c.byteLength; }
+        for (const p of parts) { out.set(new Uint8Array(p), pos); pos += p.byteLength; }
         resolve(out.buffer);
       }
     };
@@ -80,7 +68,7 @@ function splitSentences(text) {
 }
 
 export async function synthesize(text, { voice = 'en-US-JennyNeural', speed = 1.0 } = {}, onProgress = null) {
-  const chunks = splitSentences(text);
+  const chunks  = splitSentences(text);
   const buffers = [];
 
   for (let i = 0; i < chunks.length; i++) {
@@ -88,12 +76,10 @@ export async function synthesize(text, { voice = 'en-US-JennyNeural', speed = 1.
     buffers.push(await synthesizeChunk(chunks[i], voice, speed));
   }
 
-  // Concatenate MP3 frames — valid because MP3 is a stream of self-describing frames.
-  const total = buffers.reduce((n, b) => n + b.byteLength, 0);
+  const total  = buffers.reduce((n, b) => n + b.byteLength, 0);
   const merged = new Uint8Array(total);
   let pos = 0;
   for (const b of buffers) { merged.set(new Uint8Array(b), pos); pos += b.byteLength; }
 
-  onProgress?.(1, 'Done');
   return { buffer: merged.buffer, mimeType: 'audio/mpeg', ext: 'mp3' };
 }

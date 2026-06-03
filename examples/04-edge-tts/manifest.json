@@ -7,7 +7,7 @@
     "default_icon": "icons/idle.png",
     "default_popup": "popup.html"
   },
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "alarms"],
   "host_permissions": [
     "wss://speech.platform.bing.com/*"
   ],
@@ -17,5 +17,5 @@
       "js": ["contentScript.js"]
     }
   ],
-  "background": { "service_worker": "service_worker.js" }
+  "background": { "service_worker": "service_worker.js", "type": "module" }
 }

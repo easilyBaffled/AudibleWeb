@@ -1,20 +1,23 @@
-// SpeechT5 TTS via transformers.js (Microsoft).
-// Model (~75 MB) fetched from HuggingFace on first use and cached in IndexedDB.
-// Requires vendor/transformers.min.js — see vendor/SETUP.md.
+// SpeechT5 TTS via @xenova/transformers v2 (v3 doesn't support speecht5_tts yet).
+// Designed to run inside a service worker (no DOM, single-threaded WASM).
+
+export { VOICES } from './voices.js';
 
 import { pipeline, env } from './vendor/transformers.min.js';
 
-env.allowLocalModels = false;
-env.useBrowserCache = true;
+env.allowLocalModels  = false;
+env.allowRemoteModels = true;
+env.backends.onnx.wasm.proxy      = false;
+env.backends.onnx.wasm.numThreads = 1;
+env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/';
 
-// SpeechT5 uses speaker embeddings rather than named voices.
-// These are preset indices from the CMU speaker dataset included with the model.
-export const VOICES = [
-  { id: '7306', name: 'Speaker A (default)' },
-  { id: '1580', name: 'Speaker B'           },
-  { id: '3729', name: 'Speaker C'           },
-  { id: '6829', name: 'Speaker D'           },
-];
+// Speaker embedding URLs from the Xenova CMU Arctic dataset.
+const SPEAKER_URLS = {
+  slt: 'https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors/resolve/main/cmu_us_slt_arctic.pt',
+  bdl: 'https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors/resolve/main/cmu_us_bdl_arctic.pt',
+  clb: 'https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors/resolve/main/cmu_us_clb_arctic.pt',
+  rms: 'https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors/resolve/main/cmu_us_rms_arctic.pt',
+};
 
 let synthesizer = null;
 
@@ -23,31 +26,30 @@ async function getSynthesizer(onProgress) {
   synthesizer = await pipeline('text-to-speech', 'Xenova/speecht5_tts', {
     quantized: false,
     progress_callback: info => {
-      if (info.status === 'downloading') {
-        onProgress?.(info.progress / 100, `Downloading model… ${Math.round(info.progress)}%`);
+      if (info.status === 'progress' && info.total) {
+        onProgress?.(info.loaded / info.total, `Downloading model… ${Math.round(info.loaded / info.total * 100)}%`);
       }
     },
   });
   return synthesizer;
 }
 
-// SpeechT5 handles short inputs best (~200 chars per chunk).
 function chunkText(text, maxLen = 200) {
   const sentences = text.replace(/([.?!])(\s+)/g, '$1\n').split('\n').map(s => s.trim()).filter(Boolean);
   const chunks = [];
-  let current = '';
+  let cur = '';
   for (const s of sentences) {
-    if (current && (current + ' ' + s).length > maxLen) { chunks.push(current); current = s; }
-    else { current += (current ? ' ' : '') + s; }
+    if (cur && (cur + ' ' + s).length > maxLen) { chunks.push(cur); cur = s; }
+    else { cur += (cur ? ' ' : '') + s; }
   }
-  if (current) chunks.push(current);
+  if (cur) chunks.push(cur);
   return chunks;
 }
 
 function encodeWav(float32, sampleRate) {
   const dataLen = float32.length * 2;
   const buf = new ArrayBuffer(44 + dataLen);
-  const v = new DataView(buf);
+  const v   = new DataView(buf);
   const str = (off, s) => [...s].forEach((c, i) => v.setUint8(off + i, c.charCodeAt(0)));
   str(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true);
   str(8, 'WAVE'); str(12, 'fmt ');
@@ -60,22 +62,18 @@ function encodeWav(float32, sampleRate) {
   return buf;
 }
 
-// speed is not supported by SpeechT5 — ignored here.
-export async function synthesize(text, { voice = '7306' } = {}, onProgress = null) {
-  const synth = await getSynthesizer(onProgress);
+export async function synthesize(text, { voice = 'slt' } = {}, onProgress = null) {
+  const synth  = await getSynthesizer(onProgress);
   const chunks = chunkText(text);
-  const allSamples = [];
+  const all    = [];
   let sampleRate = 16000;
 
   for (let i = 0; i < chunks.length; i++) {
     onProgress?.((i + 0.5) / chunks.length, `Chunk ${i + 1} / ${chunks.length}…`);
-    const out = await synth(chunks[i], {
-      speaker_embeddings: `https://huggingface.co/datasets/Xenova/cmu-arctic-xvectors/resolve/main/cmu_us_${voice}_arctic.pt`,
-    });
+    const out  = await synth(chunks[i], { speaker_embeddings: SPEAKER_URLS[voice] });
     sampleRate = out.sampling_rate;
-    for (const s of out.audio) allSamples.push(s);
+    for (const s of out.audio) all.push(s);
   }
 
-  onProgress?.(1, 'Encoding…');
-  return { buffer: encodeWav(new Float32Array(allSamples), sampleRate), mimeType: 'audio/wav', ext: 'wav' };
+  return { buffer: encodeWav(new Float32Array(all), sampleRate), mimeType: 'audio/wav', ext: 'wav' };
 }
