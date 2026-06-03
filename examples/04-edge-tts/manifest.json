@@ -1,12 +1,15 @@
 {
   "name": "AudibleWeb — Edge TTS",
-  "description": "High-quality neural TTS using Microsoft Edge's cloud voices (~400 voices). Requires internet, no server setup.",
+  "description": "High-quality neural TTS via Microsoft Edge (~400 voices). Requires internet, no server setup.",
   "version": "1.0",
   "manifest_version": 3,
-  "action": { "default_icon": "icons/idle.png" },
+  "action": {
+    "default_icon": "icons/idle.png",
+    "default_popup": "popup.html"
+  },
   "permissions": ["tabs", "storage"],
   "host_permissions": [
-    "https://speech.platform.bing.com/*"
+    "wss://speech.platform.bing.com/*"
   ],
   "content_scripts": [
     {
@@ -14,11 +17,5 @@
       "js": ["contentScript.js"]
     }
   ],
-  "background": { "service_worker": "service_worker.js", "type": "module" },
-  "commands": {
-    "play-pause": {
-      "suggested_key": { "default": "Alt+Shift+S" },
-      "description": "Speak selected text"
-    }
-  }
+  "background": { "service_worker": "service_worker.js" }
 }

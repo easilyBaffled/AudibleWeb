@@ -1,67 +1,77 @@
-// Edge TTS — uses Microsoft's production neural TTS endpoint (same engine as Edge browser's Read Aloud).
-// No API key required. Communicates via WebSocket using the edge-tts protocol.
-// See: https://github.com/rany2/edge-tts for the protocol spec (Python reference impl).
+// Edge TTS — Microsoft's production neural TTS, same engine as Edge browser's Read Aloud.
+// Communicates via WebSocket. No API key, no server setup, just internet access.
+// Returns real MP3 bytes that can be downloaded directly.
 
 const WSS_URL = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
-const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'; // public token used by Edge browser
-const VOICE = 'en-US-JennyNeural';
-const OUTPUT_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
+const TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'; // public token used by Edge browser
 
-function uuid() {
-  return crypto.randomUUID().replace(/-/g, '');
+export const VOICES = [
+  { id: 'en-US-JennyNeural',      name: 'Jenny (US Female)'      },
+  { id: 'en-US-AriaNeural',       name: 'Aria (US Female)'       },
+  { id: 'en-US-GuyNeural',        name: 'Guy (US Male)'          },
+  { id: 'en-US-EricNeural',       name: 'Eric (US Male)'         },
+  { id: 'en-US-MichelleNeural',   name: 'Michelle (US Female)'   },
+  { id: 'en-GB-SoniaNeural',      name: 'Sonia (UK Female)'      },
+  { id: 'en-GB-RyanNeural',       name: 'Ryan (UK Male)'         },
+  { id: 'en-AU-NatashaNeural',    name: 'Natasha (AU Female)'    },
+  { id: 'en-IN-NeerjaNeural',     name: 'Neerja (IN Female)'     },
+];
+
+function uuid() { return crypto.randomUUID().replace(/-/g, ''); }
+function ts()   { return new Date().toISOString().replace(/:/g, '-').replace('Z', ''); }
+
+function ratePercent(speed) {
+  const pct = Math.round((speed - 1) * 100);
+  return pct >= 0 ? `+${pct}%` : `${pct}%`;
 }
 
-function timestamp() {
-  return new Date().toISOString().replace(/:/g, '-').replace('Z', '');
-}
-
-function buildSsml(text, voice) {
+function buildSsml(text, voice, speed) {
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
-    `<voice name='${voice}'><prosody rate='+0%' pitch='+0Hz'>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</prosody></voice></speak>`;
+    `<voice name='${voice}'><prosody rate='${ratePercent(speed)}' pitch='+0Hz'>${escaped}</prosody></voice></speak>`;
 }
 
-function synthesizeChunk(text, voice = VOICE) {
+function synthesizeChunk(text, voice, speed) {
   return new Promise((resolve, reject) => {
-    const reqId = uuid();
-    const ws = new WebSocket(`${WSS_URL}?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`);
+    const ws = new WebSocket(`${WSS_URL}?TrustedClientToken=${TOKEN}`);
     ws.binaryType = 'arraybuffer';
-
-    const audioChunks = [];
+    const chunks = [];
 
     ws.onopen = () => {
-      // Send speech config
       ws.send(
-        `X-Timestamp:${timestamp()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
-        JSON.stringify({ context: { synthesis: { audio: { metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false }, outputFormat: OUTPUT_FORMAT } } } })
+        `X-Timestamp:${ts()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n` +
+        JSON.stringify({ context: { synthesis: { audio: {
+          metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false },
+          outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+        }}}})
       );
-      // Send SSML
       ws.send(
-        `X-RequestId:${reqId}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${timestamp()}\r\nPath:ssml\r\n\r\n` +
-        buildSsml(text, voice)
+        `X-RequestId:${uuid()}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${ts()}\r\nPath:ssml\r\n\r\n` +
+        buildSsml(text, voice, speed)
       );
     };
 
     ws.onmessage = event => {
       if (event.data instanceof ArrayBuffer) {
-        // Binary: strip the header before the audio payload
+        // Strip the text header before the audio payload.
         const view = new Uint8Array(event.data);
-        const separator = new TextEncoder().encode('Path:audio\r\n\r\n');
+        const sep = new TextEncoder().encode('Path:audio\r\n\r\n');
         let offset = 0;
-        for (let i = 0; i <= view.length - separator.length; i++) {
-          if (separator.every((b, j) => view[i + j] === b)) { offset = i + separator.length; break; }
+        for (let i = 0; i <= view.length - sep.length; i++) {
+          if (sep.every((b, j) => view[i + j] === b)) { offset = i + sep.length; break; }
         }
-        audioChunks.push(event.data.slice(offset));
+        chunks.push(event.data.slice(offset));
       } else if (typeof event.data === 'string' && event.data.includes('Path:turn.end')) {
         ws.close();
-        const total = audioChunks.reduce((n, c) => n + c.byteLength, 0);
-        const merged = new Uint8Array(total);
+        const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+        const out = new Uint8Array(total);
         let pos = 0;
-        for (const c of audioChunks) { merged.set(new Uint8Array(c), pos); pos += c.byteLength; }
-        resolve(merged.buffer);
+        for (const c of chunks) { out.set(new Uint8Array(c), pos); pos += c.byteLength; }
+        resolve(out.buffer);
       }
     };
 
-    ws.onerror = reject;
+    ws.onerror = e => reject(new Error(`WebSocket error: ${e.message ?? 'unknown'}`));
   });
 }
 
@@ -69,18 +79,21 @@ function splitSentences(text) {
   return text.replace(/([.?!])(\s+)/g, '$1\n').split('\n').map(s => s.trim()).filter(Boolean);
 }
 
-async function playMp3(arrayBuffer) {
-  const ctx = new AudioContext();
-  const buffer = await ctx.decodeAudioData(arrayBuffer);
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.connect(ctx.destination);
-  return new Promise(resolve => { src.onended = resolve; src.start(); });
-}
+export async function synthesize(text, { voice = 'en-US-JennyNeural', speed = 1.0 } = {}, onProgress = null) {
+  const chunks = splitSentences(text);
+  const buffers = [];
 
-export async function speak(text, voice = VOICE) {
-  for (const chunk of splitSentences(text)) {
-    const mp3 = await synthesizeChunk(chunk, voice);
-    await playMp3(mp3);
+  for (let i = 0; i < chunks.length; i++) {
+    onProgress?.((i + 0.5) / chunks.length, `Chunk ${i + 1} / ${chunks.length}…`);
+    buffers.push(await synthesizeChunk(chunks[i], voice, speed));
   }
+
+  // Concatenate MP3 frames — valid because MP3 is a stream of self-describing frames.
+  const total = buffers.reduce((n, b) => n + b.byteLength, 0);
+  const merged = new Uint8Array(total);
+  let pos = 0;
+  for (const b of buffers) { merged.set(new Uint8Array(b), pos); pos += b.byteLength; }
+
+  onProgress?.(1, 'Done');
+  return { buffer: merged.buffer, mimeType: 'audio/mpeg', ext: 'mp3' };
 }

@@ -3,10 +3,12 @@
   "description": "High-quality neural TTS using Kokoro-82M via transformers.js. No server needed.",
   "version": "1.0",
   "manifest_version": 3,
-  "action": { "default_icon": "icons/idle.png" },
-  "permissions": ["tabs", "storage", "offscreen"],
+  "action": {
+    "default_icon": "icons/idle.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["tabs", "storage"],
   "host_permissions": [
-    "https://cdn.jsdelivr.net/*",
     "https://huggingface.co/*",
     "https://*.hf.co/*"
   ],
@@ -16,11 +18,5 @@
       "js": ["contentScript.js"]
     }
   ],
-  "background": { "service_worker": "service_worker.js", "type": "module" },
-  "commands": {
-    "play-pause": {
-      "suggested_key": { "default": "Alt+Shift+S" },
-      "description": "Speak selected text"
-    }
-  }
+  "background": { "service_worker": "service_worker.js" }
 }
