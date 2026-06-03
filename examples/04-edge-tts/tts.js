@@ -69,7 +69,7 @@ function synthesizeChunk(text, voice, speed) {
   });
 }
 
-function splitSentences(text) {
+export function splitSentences(text) {
   return text.replace(/([.?!])(\s+)/g, '$1\n').split('\n').map(s => s.trim()).filter(Boolean);
 }
 
