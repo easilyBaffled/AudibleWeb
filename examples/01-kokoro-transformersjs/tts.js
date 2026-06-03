@@ -8,19 +8,34 @@
 
 export { VOICES } from './voices.js';
 
-import { pipeline, env } from './vendor/transformers.min.js';
+// Lazy import: loaded on first synthesis so the extension starts up even if
+// vendor/transformers.min.js hasn't been downloaded yet (see vendor/SETUP.md).
+let _pipeline = null;
 
-env.allowLocalModels  = false;
-env.allowRemoteModels = true;
-env.backends.onnx.wasm.proxy      = false;
-env.backends.onnx.wasm.numThreads = 1;
-// Co-located dist/ ensures WASM binaries match the bundled ort version.
-env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/';
+async function loadPipeline() {
+  if (_pipeline) return _pipeline;
+  let mod;
+  try {
+    mod = await import('./vendor/transformers.min.js');
+  } catch {
+    throw new Error(
+      'vendor/transformers.min.js not found. Run the curl command in vendor/SETUP.md.'
+    );
+  }
+  mod.env.allowLocalModels  = false;
+  mod.env.allowRemoteModels = true;
+  mod.env.backends.onnx.wasm.proxy      = false;
+  mod.env.backends.onnx.wasm.numThreads = 1;
+  mod.env.backends.onnx.wasm.wasmPaths  = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/';
+  _pipeline = mod.pipeline;
+  return _pipeline;
+}
 
 const synthesizers = {};
 
 async function getSynthesizer(lang, onProgress) {
   if (synthesizers[lang]) return synthesizers[lang];
+  const pipeline = await loadPipeline();
   synthesizers[lang] = await pipeline('text-to-speech', `Xenova/mms-tts-${lang}`, {
     quantized: true,
     progress_callback: info => {
