@@ -1,0 +1,26 @@
+{
+  "name": "AudibleWeb — Local OpenAI TTS",
+  "description": "Neural TTS via any OpenAI-compatible local server (e.g. kokoro-fastapi on localhost:8000).",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": { "default_icon": "icons/idle.png" },
+  "permissions": ["tabs", "storage"],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["contentScript.js"]
+    }
+  ],
+  "background": { "service_worker": "service_worker.js", "type": "module" },
+  "options_page": "options.html",
+  "commands": {
+    "play-pause": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Speak selected text"
+    }
+  }
+}
