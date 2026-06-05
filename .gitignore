@@ -486,3 +486,9 @@ paket-files/
 
 # JetBrains Rider
 *.sln.iml
+
+# Kokoro benchmark audio output
+audio-output/*.wav
+audio-output/*.mp3
+audio-output/*.ogg
+audio-output/*.flac
