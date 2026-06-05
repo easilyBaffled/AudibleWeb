@@ -1,0 +1,180 @@
+## The 11 Best Productivity Apps of 2025 (We Tested Them All)
+
+*Last updated: March 2025 | Reading time: 9 min | By Staff Writer*
+
+> **Quick take:** After 6 weeks of testing, Notion and Obsidian remain the top picks for most users. New entrant **FlowDesk Pro** is worth watching. Skip Section 4 if you only care about free tools.
+
+Subscribe to our newsletter · Share · Tweet · Save
+
+---
+
+If you've spent more than five minutes on Reddit recently (specifically r/productivity, r/getdisciplined, or r/PKMS), you'll know that the debate over which productivity app is "best" never actually ends. It just... [continues indefinitely]. We decided to cut through the noise and actually test 11 of the most-talked-about options in 2025.&amp;nbsp;
+
+We ran each app through a standardized 3-week trial. Our criteria:  ease of onboarding (1–5), feature depth (1–5), cross-platform sync, pricing, and that hard-to-quantify "does it actually make you more productive" factor.&mdash; which, yes, we tried to measure.
+
+<!-- TODO: add comparison table screenshot before publishing -->
+
+---
+
+## Why We Did This (Again)
+
+Look, we know. We reviewed productivity apps in 2023. And 2024. But the space moves fast &mdash; new entrants, pricing changes, AI integrations that range from "genuinely useful" to "a button labeled AI that just opens ChatGPT." The 2024 list is already partially out of date.&amp;nbsp;&amp;nbsp;
+
+Also: several readers emailed us after our last roundup to say that [App X had changed its pricing model](https://example.com/pricing-changes-2024) and that our recommendation was now misleading. Fair point.<br>&amp;nbsp;
+
+<b>Note:</b> Prices were accurate as of publication date. Check each vendor's site before purchasing.
+
+---
+
+## 1. Notion — Still the Kitchen Sink Champion
+
+**Price:** Free / $10/mo (Plus) / $15/mo (Business)
+**Platforms:** Web, Mac, Windows, iOS, Android
+**Best for:** Teams, knowledge bases, project management
+
+Notion remains the most flexible tool on this list. If you can imagine a productivity use case, someone has built a Notion template for it. The database functionality is genuinely powerful &mdash; you can link databases, filter views, and create rollup properties that would make a spreadsheet user jealous.
+
+That said, Notion has a learning curve. A steep one. New users often spend their first week building *the system* instead of actually doing work. This is a known failure mode.[^1]
+
+**What's new in 2025:**
+- AI writing assistant baked in (costs extra, $8/mo add-on)
+- "Simple mode" for new users (good call)
+- Better offline support on mobile (finally)
+
+| Feature | Free | Plus | Business |
+|---|---|---|---|
+| Blocks | 1,000 | Unlimited | Unlimited |
+| File uploads | 5MB limit | Unlimited | Unlimited |
+| Version history | 7 days | 30 days | 90 days |
+| AI features | No | Add-on | Add-on |
+
+**Verdict:** 4.2/5. Best-in-class for teams who are willing to invest in setup. Solo users should consider whether they need this much flexibility.
+
+---
+
+## 2. Obsidian — The Note-Taker's Note-Taker
+
+**Price:** Free (personal) / $50/yr (Sync) / $50/yr (Publish)
+**Platforms:** Mac, Windows, Linux, iOS, Android
+**Best for:** Writers, researchers, long-term knowledge management
+
+Obsidian stores your notes as plain `.md` files on your device. That's it. No proprietary format, no vendor lock-in, no "we're changing our pricing model" surprise emails. In 2025, when half the apps on this list have been acquired, pivoted, or shuttered, this matters more than it used to.
+
+The plugin ecosystem is extraordinary. There are plugins for:
+- Spaced repetition (Anki-style flashcards)
+- Canvas-style visual note linking
+- Git sync (so your notes live in a repository)
+- `dataview` queries that turn your notes into a database
+- Calendar views, kanban boards, reading lists
+
+The tradeoff: Obsidian requires you to *want* to configure things. If you just want to open an app and type, the plugin landscape can feel overwhelming. Use the default setup and add complexity only when you hit a real limitation.
+
+**Performance note:** On vaults over ~10,000 notes, startup time can be slow. We saw 4–8 second cold launch times on a 2022 MacBook Pro. Use `cmd+shift+p` to run the "Reload without saving" command if it hangs.&amp;nbsp;
+
+**Verdict:** 4.5/5 for the right user. Best markdown note-taking app available. Not for everyone.
+
+---
+
+## 3. FlowDesk Pro — The New Entrant Worth Watching
+
+**Price:** $12/mo (Solo) / $24/mo (Teams)
+**Platforms:** Web, Mac (beta), iOS (beta)
+**Best for:** Task management + time blocking in one place
+
+FlowDesk Pro only launched in Q3 2024, but it's already generating significant discussion. The core idea: your task list and your calendar are the same thing. You don't maintain a to-do list separately from your schedule — you drag tasks onto time blocks, and the app enforces the constraint that every task must have a time slot before it's "active."
+
+This sounds obvious. It is not how most people work. The friction of scheduling every task is, for some users, the exact discipline they needed. For others it feels like punishment.&amp;nbsp;&amp;nbsp;
+
+Visit https://flowdesk.io/pricing for current pricing — they were running a 40% launch discount as of March 2025 that may or may not still be active.
+
+**What we liked:**
+- Clean, fast UI (no Electron bloat — it's a proper native app)
+- Calendar integration actually works (Google Calendar, Outlook, iCal)
+- "Focus mode" hides everything except the current time block
+
+**What we didn't:**
+- No offline mode yet
+- Mobile apps are clearly beta-quality
+- $12/mo is steep for a tool that's still maturing
+- Export options are thin — getting your data out is harder than it should be[^2]
+
+**Verdict:** 3.8/5. Check back in 12 months. The fundamentals are strong.
+
+---
+
+## Section 4 — Free-Only Options
+
+*Skip this section if you're willing to pay for a productivity app. Jump to Section 5.*
+
+If you need free and functional, your best options in 2025 are:
+
+- **Notion** (free tier is genuinely usable for solo users)
+- **Obsidian** (fully free for personal use, no features gated)
+- **Standard Notes** (https://standardnotes.com — encrypted, open source, free tier available)
+- **Logseq** (open source, local-first, similar to Obsidian, 100% free)
+
+The free tier of most "freemium" apps in this space has gotten more restrictive over the past two years. TickTick, Todoist, and Things 3 have all either cut free-tier features or raised prices. Budget accordingly.
+
+---
+
+## What We Didn't Test (And Why)
+
+Some notable omissions from this roundup:
+
+- **Things 3** — Mac/iOS only, no web app, $80 one-time. Great app. Out of scope for cross-platform comparison.
+- **Coda** — Overlap with Notion is too significant to make a separate entry useful
+- **Linear** — Software team tool, not general productivity
+- **Monday.com** / **Asana** / **Jira** — Team project management category, separate review forthcoming
+
+---
+
+## The Honest Answer
+
+Here's the thing nobody in the "productivity app" space likes to say: **the best app is the one you'll actually use.**&trade;
+
+We know. You've heard it before. It's true anyway.
+
+The apps that ranked highest in our testing are the ones with the lowest friction between "I need to do something" and "I have recorded that I need to do something." Setup complexity, feature depth, AI integrations &mdash; these are all secondary to the question of whether the app disappears into your workflow or constantly demands attention.
+
+Most productivity apps fail not because they're badly designed but because they require ongoing maintenance that eventually exceeds the value they provide. The best systems are the ones you stop noticing.&amp;nbsp;
+
+---
+
+---
+
+## FAQ: Things Readers Keep Asking Us
+
+**Q: Is Notion worth it for solo users?**
+A: Depends how you work. If you like building systems, yes. If you just want to write things down, it's overkill. Try [Obsidian](https://obsidian.md) first — it's free and has zero lock-in.&amp;nbsp;
+
+**Q: Can I import my data from [App X] to [App Y]?**
+A: Sometimes. Markdown-based tools (Obsidian, Logseq) are the most portable. Notion has decent export but the output requires cleanup. FlowDesk Pro exports to CSV only as of March 2025.[^2]&amp;nbsp;&amp;nbsp;
+
+**Q: What about Roam Research?**
+A: We tested it in 2022 and 2023. Pricing ($15/mo or $500 one-time) is hard to justify compared to Obsidian. If you're already invested in Roam's outliner model, it's still good. If you're starting fresh, see: https://roamresearch.com/pricing before deciding.
+
+**Q: Is there a good free Notion alternative?**
+A: AppFlowy (https://appflowy.io) is open source and self-hostable. AnyType is another option. Neither has reached Notion's polish level but both are actively developed as of 2025.
+
+**Q: I tried the app you recommended and it didn't work for me. Why?**
+A: Productivity apps are personal. What works for our test users won't necessarily work for you. The best advice we can give is: pick one, use it for 30 days before evaluating, and resist the urge to switch because of a single frustrating feature.&amp;nbsp;
+
+---
+
+## Changelog
+
+- **March 2025:** Added FlowDesk Pro. Updated Notion pricing. Removed Roam Research from main recommendations.
+- **November 2024:** Updated Obsidian section to reflect v1.6 plugin API changes.
+- **July 2024:** Initial 2025 draft.
+
+---
+
+*Related: [Our 2024 roundup](https://example.com/productivity-2024) | [Best note-taking apps](https://example.com/note-taking) | [GTD in 2025: does it still work?](https://example.com/gtd-2025)*
+
+Subscribe to our newsletter · Share · Tweet · Save
+
+---
+
+[^1]: This failure mode is so common it has a name in the Notion community: "Notion-itis." The cure is a pre-built template and a rule against adding new databases for 30 days.
+
+[^2]: As of March 2025, FlowDesk Pro supports CSV export of tasks only. No export for time-block history or completed sessions. The company has confirmed a full export feature is "on the roadmap" for Q2 2025.
